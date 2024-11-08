@@ -6,7 +6,7 @@ from urllib.parse import urlencode, urlparse, parse_qs
 # Strava client credentials (hardcoded for now)
 CLIENT_ID = "33110"
 CLIENT_SECRET = "ec90483bfa8994b3dc004eb914c7f50a59fc78f1"
-REDIRECT_URI = "your_redirect_uri"  # e.g., "http://localhost:8501"
+REDIRECT_URI = "https://connect.posit.cloud"  # e.g., "http://localhost:8501"
 BASE_URL = "https://www.strava.com/api/v3"
 
 # OAuth endpoint
