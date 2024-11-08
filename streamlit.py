@@ -18,7 +18,7 @@ def get_strava_authorization_url():
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
         "response_type": "code",
-        "scope": "activity:read_all",  # Scope to read all activities
+        "scope": "activity:read_all",
         "approval_prompt": "auto"
     }
     return f"{AUTH_URL}?{urlencode(params)}"
@@ -92,15 +92,25 @@ def main():
         st.markdown(f"[Authorize with Strava]({auth_url})")
         
         # Step 2: Check if user has been redirected with authorization code
-        if "code" in st.experimental_get_query_params():
-            code = st.experimental_get_query_params()["code"][0]
+        if "code" in st.query_params:
+            code = st.query_params["code"][0]
             token_data = exchange_code_for_tokens(code)
             if token_data:
                 st.session_state["access_token"] = token_data["access_token"]
                 st.session_state["refresh_token"] = token_data["refresh_token"]
+                st.session_state["expires_at"] = token_data["expires_at"]
     else:
         # Step 3: Use access token to get activities
         access_token = st.session_state["access_token"]
+        
+        # Refresh the access token if expired
+        if st.session_state["expires_at"] < int(time.time()):
+            token_data = refresh_access_token(st.session_state["refresh_token"])
+            if token_data:
+                st.session_state["access_token"] = token_data["access_token"]
+                st.session_state["refresh_token"] = token_data["refresh_token"]
+                st.session_state["expires_at"] = token_data["expires_at"]
+
         activities = get_activities(access_token)
         
         if activities:
@@ -111,13 +121,6 @@ def main():
 
             # Plot the data
             plot_data(distances, avg_powers, elevations, avg_hrs)
-
-            # Refresh the access token if expired
-            if "expires_at" in st.session_state and st.session_state["expires_at"] < int(time.time()):
-                token_data = refresh_access_token(st.session_state["refresh_token"])
-                if token_data:
-                    st.session_state["access_token"] = token_data["access_token"]
-                    st.session_state["refresh_token"] = token_data["refresh_token"]
 
 if __name__ == "__main__":
     main()
