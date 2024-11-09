@@ -6,7 +6,7 @@ import time
 # Strava client credentials (hardcoded for now)
 CLIENT_ID = "33110"
 CLIENT_SECRET = "ec90483bfa8994b3dc004eb914c7f50a59fc78f1"
-REDIRECT_URI = "https://connect.posit.cloud/scubastevew/content/01930e23-a494-1aed-3ae7-1b3cc8c920a6"  # or your ngrok public URL for testing
+REDIRECT_URI = "https://connect.posit.cloud/"  # or your ngrok public URL for testing
 BASE_URL = "https://www.strava.com/api/v3"
 
 # OAuth endpoints
