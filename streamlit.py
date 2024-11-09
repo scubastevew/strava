@@ -4,9 +4,9 @@ from urllib.parse import urlencode
 import time
 
 # Strava client credentials (hardcoded for now)
-CLIENT_ID = "your_client_id"
-CLIENT_SECRET = "your_client_secret"
-REDIRECT_URI = "http://localhost:8501"  # or your ngrok public URL for testing
+CLIENT_ID = "33110"
+CLIENT_SECRET = "ec90483bfa8994b3dc004eb914c7f50a59fc78f1"
+REDIRECT_URI = "http://connect.posit.cloud"  # or your ngrok public URL for testing
 BASE_URL = "https://www.strava.com/api/v3"
 
 # OAuth endpoints
