@@ -1,17 +1,17 @@
 import requests
 import streamlit as st
-import matplotlib.pyplot as plt
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode
+import time
 
 # Strava client credentials (hardcoded for now)
-CLIENT_ID = "33110"
-CLIENT_SECRET = "ec90483bfa8994b3dc004eb914c7f50a59fc78f1"
-REDIRECT_URI = "https://connect.posit.cloud/scubastevew/content/01930e23-a494-1aed-3ae7-1b3cc8c920a6"  # e.g., "http://localhost:8501"
+CLIENT_ID = "your_client_id"
+CLIENT_SECRET = "your_client_secret"
+REDIRECT_URI = "http://localhost:8501"  # or your ngrok public URL for testing
 BASE_URL = "https://www.strava.com/api/v3"
 
-# OAuth endpoint
+# OAuth endpoints
 AUTH_URL = "https://www.strava.com/oauth/authorize"
-TOKEN_URL = "https://www.strava.com/api/v3/oauth/token"
+TOKEN_URL = "https://www.strava.com/oauth/token"
 
 def get_strava_authorization_url():
     params = {
@@ -61,27 +61,6 @@ def get_activities(access_token):
         st.error(f"Failed to fetch activities: {response.status_code}")
         return []
 
-def plot_data(distances, avg_powers, elevations, avg_hrs):
-    fig, ax = plt.subplots(2, 2, figsize=(10, 8))
-    
-    ax[0, 0].plot(distances, avg_powers, marker='o', color='b')
-    ax[0, 0].set_title("Distance vs Average Power (W)")
-    ax[0, 0].set_xlabel("Distance (km)")
-    ax[0, 0].set_ylabel("Average Power (W)")
-
-    ax[0, 1].plot(distances, elevations, marker='o', color='g')
-    ax[0, 1].set_title("Distance vs Elevation Gain (m)")
-    ax[0, 1].set_xlabel("Distance (km)")
-    ax[0, 1].set_ylabel("Elevation Gain (m)")
-
-    ax[1, 0].plot(distances, avg_hrs, marker='o', color='r')
-    ax[1, 0].set_title("Distance vs Average Heart Rate (bpm)")
-    ax[1, 0].set_xlabel("Distance (km)")
-    ax[1, 0].set_ylabel("Average Heart Rate (bpm)")
-
-    fig.tight_layout()
-    st.pyplot(fig)
-
 # Streamlit UI
 def main():
     st.title("Strava Ride Data Visualization with OAuth")
@@ -111,16 +90,22 @@ def main():
                 st.session_state["refresh_token"] = token_data["refresh_token"]
                 st.session_state["expires_at"] = token_data["expires_at"]
 
+        # Fetch and display activities
         activities = get_activities(access_token)
         
         if activities:
-            distances = [activity.get("distance", 0) / 1000 for activity in activities]  # in km
-            avg_powers = [activity.get("average_watts", 0) for activity in activities]
-            elevations = [activity.get("total_elevation_gain", 0) for activity in activities]
-            avg_hrs = [activity.get("average_heartrate", 0) for activity in activities]
-
-            # Plot the data
-            plot_data(distances, avg_powers, elevations, avg_hrs)
+            # Display a table with activity data
+            activity_data = [
+                {
+                    "Date": activity.get("start_date_local", "N/A"),
+                    "Distance (km)": activity.get("distance", 0) / 1000,
+                    "Avg Power (W)": activity.get("average_watts", "N/A"),
+                    "Elevation Gain (m)": activity.get("total_elevation_gain", "N/A"),
+                    "Avg Heart Rate (bpm)": activity.get("average_heartrate", "N/A")
+                }
+                for activity in activities
+            ]
+            st.write(activity_data)  # Display the list of activities as a table
 
 if __name__ == "__main__":
     main()
