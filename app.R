@@ -1,21 +1,25 @@
 # Load necessary libraries
 library(shiny)
 library(httr)
-library(strava)
+library(rStrava)
+library(dplyr)
 
 # Source the credentials from keys.R
 source("keys.R")
 
 # Define the UI
 ui <- fluidPage(
-  titlePanel("Strava Authentication"),
+  titlePanel("Strava Authentication & Activities"),
   sidebarLayout(
     sidebarPanel(
-      actionButton("auth_btn", "Authenticate with Strava")
+      actionButton("auth_btn", "Authenticate with Strava"),
+      actionButton("get_activities_btn", "Get Activities"),
+      br(),
+      br(),
+      textOutput("auth_status")
     ),
     mainPanel(
-      textOutput("auth_status"),
-      textOutput("token_info")
+      tableOutput("activities_table")
     )
   )
 )
@@ -25,6 +29,9 @@ server <- function(input, output, session) {
   
   # Reactive value to store the authentication token
   auth_token <- reactiveVal(NULL)
+  
+  # Reactive value to store the activities
+  activities <- reactiveVal(NULL)
   
   # Observe the authentication button
   observeEvent(input$auth_btn, {
@@ -51,6 +58,43 @@ server <- function(input, output, session) {
     }
   })
   
+  # Observe the get activities button
+  observeEvent(input$get_activities_btn, {
+    req(auth_token()) # Ensure the user is authenticated
+    
+    token <- auth_token()
+    activities_data <- tryCatch(
+      {
+        # Fetch activities using the Strava API
+        get_activity_list(
+          stoken = token, 
+          page_id = 1, 
+          per_page = 30
+        )
+      },
+      error = function(e) {
+        showNotification("Failed to fetch activities.", type = "error")
+        NULL
+      }
+    )
+    
+    if (!is.null(activities_data)) {
+      # Process and store the activities data
+      activities(
+        activities_data %>%
+          select(
+            id,
+            name,
+            distance,
+            moving_time,
+            elapsed_time,
+            total_elevation_gain
+          )
+      )
+      showNotification("Activities successfully retrieved!", type = "message")
+    }
+  })
+  
   # Display authentication status
   output$auth_status <- renderText({
     if (is.null(auth_token())) {
@@ -60,13 +104,10 @@ server <- function(input, output, session) {
     }
   })
   
-  # Display token information
-  output$token_info <- renderText({
-    token <- auth_token()
-    if (is.null(token)) {
-      return("No token available.")
-    }
-    paste("Access Token:", token$credentials$access_token)
+  # Display the activities table
+  output$activities_table <- renderTable({
+    req(activities()) # Ensure activities are available
+    activities()
   })
 }
 
